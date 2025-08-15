@@ -1,0 +1,42 @@
+=== BLUEPRINT PIN TYPES REFERENCE ===
+Generated: 2025.08.15-03.22.34
+
+EXECUTION PINS:
+- PinCategory="exec"  Direction="EGPD_Input"/"EGPD_Output"
+
+BOOLEAN:
+- PinCategory="bool"  DefaultValue="true"/"false"
+
+NUMERIC TYPES:
+- byte, int, int64, real:float, real:double
+
+STRING TYPES:
+- string, text, name
+
+STRUCT TYPES:
+- Vector, Rotator, Transform, LinearColor, HitResult
+
+OBJECT TYPES:
+- Actor, Pawn, Character, PlayerController, ActorComponent
+
+CLASS REFERENCES:
+- class (purple)
+
+INTERFACES:
+- interface (yellow)
+
+DELEGATES:
+- delegate / mcdelegate
+
+CONTAINERS:
+- Array, Set, Map
+
+WILDCARD:
+- wildcard pins adapt to type
+
+PIN PROPERTIES:
+- bIsReference, bIsConst, bHidden, bAdvancedView, etc.
+
+COMMON PIN NAMES:
+- execute, then, Completed, self, Target, ReturnValue, Condition
+
