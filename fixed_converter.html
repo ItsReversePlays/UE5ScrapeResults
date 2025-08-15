@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>C++ to Blueprint Converter</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 2.5em;
+            font-weight: 300;
+        }
+        
+        .header p {
+            margin: 10px 0 0 0;
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0;
+            min-height: 600px;
+        }
+        
+        .input-section, .output-section {
+            padding: 30px;
+        }
+        
+        .input-section {
+            border-right: 2px solid #f0f0f0;
+        }
+        
+        .section-title {
+            font-size: 1.3em;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #2c3e50;
+        }
+        
+        .code-input {
+            width: 100%;
+            height: 400px;
+            border: 2px solid #e1e8ed;
+            border-radius: 8px;
+            padding: 15px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 14px;
+            resize: vertical;
+            background: #f8f9fa;
+            transition: border-color 0.3s ease;
+            box-sizing: border-box;
+        }
+        
+        .code-input:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+        }
+        
+        .code-output {
+            width: 100%;
+            height: 400px;
+            border: 2px solid #e1e8ed;
+            border-radius: 8px;
+            padding: 15px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 12px;
+            background: #f8f9fa;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            color: #2c3e50;
+            box-sizing: border-box;
+        }
+        
+        .convert-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin: 20px 0;
+            transition: transform 0.2s ease;
+        }
+        
+        .convert-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(102, 126, 234, 0.3);
+        }
+        
+        .convert-btn:active {
+            transform: translateY(0);
+        }
+        
+        .examples {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .example-btn {
+            padding: 10px 15px;
+            background: #e8f2ff;
+            border: 1px solid #b3d9ff;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            text-align: center;
+            transition: all 0.2s ease;
+        }
+        
+        .example-btn:hover {
+            background: #d1e7ff;
+            border-color: #667eea;
+        }
+        
+        .copy-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-top: 15px;
+            transition: background 0.2s ease;
+        }
+        
+        .copy-btn:hover {
+            background: #218838;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>C++ to Blueprint Converter</h1>
+            <p>Convert C++ code to UE5 Blueprint pasteable format</p>
+        </div>
+        
+        <div class="main-content">
+            <div class="input-section">
+                <div class="section-title">C++ Code Input</div>
+                
+                <div class="examples">
+                    <button class="example-btn" id="btnPrint">Print String</button>
+                    <button class="example-btn" id="btnBranch">If Statement</button>
+                    <button class="example-btn" id="btnMath">Math Operation</button>
+                    <button class="example-btn" id="btnVariable">Variable Set</button>
+                </div>
+                
+                <textarea class="code-input" id="cppInput" placeholder="Enter your C++ code here...">UE_LOG(LogTemp, Warning, TEXT("Hello Blueprint!"));</textarea>
+                
+                <button class="convert-btn" id="btnConvert">🔄 Convert to Blueprint</button>
+            </div>
+            
+            <div class="output-section">
+                <div class="section-title">Blueprint Pasteable Code</div>
+                <div class="code-output" id="blueprintOutput">Converted Blueprint code will appear here...</div>
+                <button class="copy-btn" id="btnCopy">📋 Copy to Clipboard</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Generate unique GUID
+        function generateGUID() {
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                var r = Math.random() * 16 | 0;
+                var v = c == 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16).toUpperCase();
+            });
+        }
+
+        // Convert UE_LOG to Blueprint PrintString
+        function convertPrintString(message) {
+            var beginPlayId = generateGUID();
+            var printId = generateGUID();
+            var execOutId = generateGUID();
+            var execInId = generateGUID();
+            
+            return `Begin Object Class=/Script/BlueprintGraph.K2Node_Event Name="K2Node_Event_BeginPlay"
+   EventReference=(MemberParent="/Script/CoreUObject.Class'/Script/Engine.Actor'",MemberName="ReceiveBeginPlay")
+   bOverrideFunction=True
+   CustomProperties Pin (PinId=${beginPlayId},PinName="OutputDelegate",Direction="EGPD_Output",PinType.PinCategory="delegate")
+   CustomProperties Pin (PinId=${execOutId},PinName="then",Direction="EGPD_Output",PinType.PinCategory="exec",LinkedTo=(K2Node_CallFunction_Print ${execInId},))
+End Object
+
+Begin Object Class=/Script/BlueprintGraph.K2Node_CallFunction Name="K2Node_CallFunction_Print"
+   FunctionReference=(MemberParent="/Script/CoreUObject.Class'/Script/Engine.KismetSystemLibrary'",MemberName="PrintString")
+   NodePosX=300
+   CustomProperties Pin (PinId=${execInId},PinName="execute",PinType.PinCategory="exec",LinkedTo=(K2Node_Event_BeginPlay ${execOutId},))
+   CustomProperties Pin (PinId=${generateGUID()},PinName="then",Direction="EGPD_Output",PinType.PinCategory="exec")
+   CustomProperties Pin (PinId=${generateGUID()},PinName="self",PinType.PinCategory="object",PinType.PinSubCategoryObject="/Script/CoreUObject.Class'/Script/Engine.KismetSystemLibrary'",DefaultObject="/Script/Engine.Default__KismetSystemLibrary",bHidden=True)
+   CustomProperties Pin (PinId=${generateGUID()},PinName="WorldContextObject",PinType.PinCategory="object",PinType.PinSubCategoryObject="/Script/CoreUObject.Class'/Script/CoreUObject.Object'",bHidden=True)
+   CustomProperties Pin (PinId=${printId},PinName="InString",PinType.PinCategory="string",DefaultValue="${message}")
+   CustomProperties Pin (PinId=${generateGUID()},PinName="bPrintToScreen",PinType.PinCategory="bool",DefaultValue="true")
+   CustomProperties Pin (PinId=${generateGUID()},PinName="bPrintToLog",PinType.PinCategory="bool",DefaultValue="true")
+End Object`;
+        }
+
+        // Convert if statement to Blueprint Branch
+        function convertIfStatement(condition) {
+            var beginPlayId = generateGUID();
+            var branchId = generateGUID();
+            var execOutId = generateGUID();
+            var execInId = generateGUID();
+            var conditionId = generateGUID();
+            var trueId = generateGUID();
+            var falseId = generateGUID();
+            var printTrueExecId = generateGUID();
+            var printFalseExecId = generateGUID();
+            
+            // Check if it's a variable comparison
+            var varMatch = condition.match(/(\w+)\s*([><=]+)\s*(\d+)/);
+            var variableNodes = '';
+            var conditionConnection = '';
+            
+            if (varMatch) {
+                var varName = varMatch[1];
+                var operator = varMatch[2];
+                var value = varMatch[3];
+                var varGetId = generateGUID();
+                var varOutputId = generateGUID();
+                var mathId = generateGUID();
+                var mathOutputId = generateGUID();
+                var varGuid = generateGUID();
+                
+                variableNodes = `
+Begin Object Class=/Script/BlueprintGraph.K2Node_VariableGet Name="K2Node_VariableGet_${varName}"
+   VariableReference=(MemberName="${varName}",MemberGuid=${varGuid},bSelfContext=True)
+   NodePosX=100
+   CustomProperties Pin (PinId=${varOutputId},PinName="${varName}",Direction="EGPD_Output",PinType.PinCategory="real",PinType.PinSubCategory="double")
+End Object
+
+Begin Object Class=/Script/BlueprintGraph.K2Node_CallFunction Name="K2Node_CallFunction_Greater"
+   bDefaultsToPureFunc=True
+   FunctionReference=(MemberParent="/Script/CoreUObject.Class'/Script/Engine.KismetMathLibrary'",MemberName="Greater_DoubleDouble")
+   NodePosX=200
+   CustomProperties Pin (PinId=${generateGUID()},PinName="self",PinType.PinCategory="object",PinType.PinSubCategoryObject="/Script/CoreUObject.Class'/Script/Engine.KismetMathLibrary'",DefaultObject="/Script/Engine.Default__KismetMathLibrary",bHidden=True)
+   CustomProperties Pin (PinId=${generateGUID()},PinName="A",PinType.PinCategory="real",PinType.PinSubCategory="double",LinkedTo=(K2Node_VariableGet_${varName} ${varOutputId},))
+   CustomProperties Pin (PinId=${generateGUID()},PinName="B",PinType.PinCategory="real",PinType.PinSubCategory="double",DefaultValue="${value}")
+   CustomProperties Pin (PinId=${mathOutputId},PinName="ReturnValue",Direction="EGPD_Output",PinType.PinCategory="bool")
+End Object`;
+                
+                conditionConnection = `,LinkedTo=(K2Node_CallFunction_Greater ${mathOutputId},)`;
+            }
+            
+            return `Begin Object Class=/Script/BlueprintGraph.K2Node_Event Name="K2Node_Event_BeginPlay"
+   EventReference=(MemberParent="/Script/CoreUObject.Class'/Script/Engine.Actor'",MemberName="ReceiveBeginPlay")
+   bOverrideFunction=True
+   CustomProperties Pin (PinId=${beginPlayId},PinName="OutputDelegate",Direction="EGPD_Output",PinType.PinCategory="delegate")
+   CustomProperties Pin (PinId=${execOutId},PinName="then",Direction="EGPD_Output",PinType.PinCategory="exec",LinkedTo=(K2Node_IfThenElse_Branch ${execInId},))
+End Object
+${variableNodes}
+Begin Object Class=/Script/BlueprintGraph.K2Node_IfThenElse Name="K2Node_IfThenElse_Branch"
+   NodePosX=300
+   CustomProperties Pin (PinId=${execInId},PinName="execute",PinType.PinCategory="exec",LinkedTo=(K2Node_Event_BeginPlay ${execOutId},))
+   CustomProperties Pin (PinId=${conditionId},PinName="Condition",PinType.PinCategory="bool"${conditionConnection})
+   CustomProperties Pin (PinId=${trueId},PinName="then",Direction="EGPD_Output",PinType.PinCategory="exec")
+   CustomProperties Pin (PinId=${falseId},PinName="else",Direction="EGPD_Output",PinType.PinCategory="exec")
+End Object
+
+Begin Object Class=/Script/BlueprintGraph.K2Node_CallFunction Name="K2Node_CallFunction_PrintTrue"
+   FunctionReference=(MemberParent="/Script/CoreUObject.Class'/Script/Engine.KismetSystemLibrary'",MemberName="PrintString")
+   NodePosX=500
+   NodePosY=-50
+   CustomProperties Pin (PinId=${printTrueExecId},PinName="execute",PinType.PinCategory="exec",LinkedTo=(K2Node_IfThenElse_Branch ${trueId},))
+   CustomProperties Pin (PinId=${generateGUID()},PinName="then",Direction="EGPD_Output",PinType.PinCategory="exec")
+   CustomProperties Pin (PinId=${generateGUID()},PinName="self",PinType.PinCategory="object",PinType.PinSubCategoryObject="/Script/CoreUObject.Class'/Script/Engine.KismetSystemLibrary'",DefaultObject="/Script/Engine.Default__KismetSystemLibrary",bHidden=True)
+   CustomProperties Pin (PinId=${generateGUID()},PinName="WorldContextObject",PinType.PinCategory="object",PinType.PinSubCategoryObject="/Script/CoreUObject.Class'/Script/CoreUObject.Object'",bHidden=True)
+   CustomProperties Pin (PinId=${generateGUID()},PinName="InString",PinType.PinCategory="string",DefaultValue="${condition} is TRUE")
+   CustomProperties Pin (PinId=${generateGUID()},PinName="bPrintToScreen",PinType.PinCategory="bool",DefaultValue="true")
+   CustomProperties Pin (PinId=${generateGUID()},PinName="bPrintToLog",PinType.PinCategory="bool",DefaultValue="true")
+End Object
+
+Begin Object Class=/Script/BlueprintGraph.K2Node_CallFunction Name="K2Node_CallFunction_PrintFalse"
+   FunctionReference=(MemberParent="/Script/CoreUObject.Class'/Script/Engine.KismetSystemLibrary'",MemberName="PrintString")
+   NodePosX=500
+   NodePosY=50
+   CustomProperties Pin (PinId=${printFalseExecId},PinName="execute",PinType.PinCategory="exec",LinkedTo=(K2Node_IfThenElse_Branch ${falseId},))
+   CustomProperties Pin (PinId=${generateGUID()},PinName="then",Direction="EGPD_Output",PinType.PinCategory="exec")
+   CustomProperties Pin (PinId=${generateGUID()},PinName="self",PinType.PinCategory="object",PinType.PinSubCategoryObject="/Script/CoreUObject.Class'/Script/Engine.KismetSystemLibrary'",DefaultObject="/Script/Engine.Default__KismetSystemLibrary",bHidden=True)
+   CustomProperties Pin (PinId=${generateGUID()},PinName="WorldContextObject",PinType.PinCategory="object",PinType.PinSubCategoryObject="/Script/CoreUObject.Class'/Script/CoreUObject.Object'",bHidden=True)
+   CustomProperties Pin (PinId=${generateGUID()},PinName="InString",PinType.PinCategory="string",DefaultValue="${condition} is FALSE")
+   CustomProperties Pin (PinId=${generateGUID()},PinName="bPrintToScreen",PinType.PinCategory="bool",DefaultValue="true")
+   CustomProperties Pin (PinId=${generateGUID()},PinName="bPrintToLog",PinType.PinCategory="bool",DefaultValue="true")
+End Object`;
+        }
+
+        // Convert math operation to Blueprint
+        function convertMathOperation(varName, aValue, bValue) {
+            var beginPlayId = generateGUID();
+            var mathId = generateGUID();
+            var toStringId = generateGUID();
+            var printId = generateGUID();
+            var execOutId = generateGUID();
+            var execInId = generateGUID();
+            var mathOutputId = generateGUID();
+            var toStringOutputId = generateGUID();
+            var stringInputId = generateGUID();
+            
+            return `Begin Object Class=/Script/BlueprintGraph.K2Node_Event Name="K2Node_Event_BeginPlay"
+   EventReference=(MemberParent="/Script/CoreUObject.Class'/Script/Engine.Actor'",MemberName="ReceiveBeginPlay")
+   bOverrideFunction=True
+   CustomProperties Pin (PinId=${beginPlayId},PinName="OutputDelegate",Direction="EGPD_Output",PinType.PinCategory="delegate")
+   CustomProperties Pin (PinId=${execOutId},PinName="then",Direction="EGPD_Output",PinType.PinCategory="exec",LinkedTo=(K2Node_CallFunction_Print ${execInId},))
+End Object
+
+Begin Object Class=/Script/BlueprintGraph.K2Node_CallFunction Name="K2Node_CallFunction_Add"
+   bDefaultsToPureFunc=True
+   FunctionReference=(MemberParent="/Script/CoreUObject.Class'/Script/Engine.KismetMathLibrary'",MemberName="Add_DoubleDouble")
+   NodePosX=150
+   CustomProperties Pin (PinId=${generateGUID()},PinName="self",PinType.PinCategory="object",PinType.PinSubCategoryObject="/Script/CoreUObject.Class'/Script/Engine.KismetMathLibrary'",DefaultObject="/Script/Engine.Default__KismetMathLibrary",bHidden=True)
+   CustomProperties Pin (PinId=${generateGUID()},PinName="A",PinType.PinCategory="real",PinType.PinSubCategory="double",DefaultValue="${aValue}")
+   CustomProperties Pin (PinId=${generateGUID()},PinName="B",PinType.PinCategory="real",PinType.PinSubCategory="double",DefaultValue="${bValue}")
+   CustomProperties Pin (PinId=${mathOutputId},PinName="ReturnValue",Direction="EGPD_Output",PinType.PinCategory="real",PinType.PinSubCategory="double")
+End Object
+
+Begin Object Class=/Script/BlueprintGraph.K2Node_CallFunction Name="K2Node_CallFunction_ToString"
+   bDefaultsToPureFunc=True
+   FunctionReference=(MemberParent="/Script/CoreUObject.Class'/Script/Engine.KismetStringLibrary'",MemberName="Conv_DoubleToString")
+   NodePosX=250
+   CustomProperties Pin (PinId=${generateGUID()},PinName="self",PinType.PinCategory="object",PinType.PinSubCategoryObject="/Script/CoreUObject.Class'/Script/Engine.KismetStringLibrary'",DefaultObject="/Script/Engine.Default__KismetStringLibrary",bHidden=True)
+   CustomProperties Pin (PinId=${generateGUID()},PinName="InDouble",PinType.PinCategory="real",PinType.PinSubCategory="double",LinkedTo=(K2Node_CallFunction_Add ${mathOutputId},))
+   CustomProperties Pin (PinId=${toStringOutputId},PinName="ReturnValue",Direction="EGPD_Output",PinType.PinCategory="string")
+End Object
+
+Begin Object Class=/Script/BlueprintGraph.K2Node_CallFunction Name="K2Node_CallFunction_Print"
+   FunctionReference=(MemberParent="/Script/CoreUObject.Class'/Script/Engine.KismetSystemLibrary'",MemberName="PrintString")
+   NodePosX=400
+   CustomProperties Pin (PinId=${execInId},PinName="execute",PinType.PinCategory="exec",LinkedTo=(K2Node_Event_BeginPlay ${execOutId},))
+   CustomProperties Pin (PinId=${generateGUID()},PinName="then",Direction="EGPD_Output",PinType.PinCategory="exec")
+   CustomProperties Pin (PinId=${generateGUID()},PinName="self",PinType.PinCategory="object",PinType.PinSubCategoryObject="/Script/CoreUObject.Class'/Script/Engine.KismetSystemLibrary'",DefaultObject="/Script/Engine.Default__KismetSystemLibrary",bHidden=True)
+   CustomProperties Pin (PinId=${generateGUID()},PinName="WorldContextObject",PinType.PinCategory="object",PinType.PinSubCategoryObject="/Script/CoreUObject.Class'/Script/CoreUObject.Object'",bHidden=True)
+   CustomProperties Pin (PinId=${stringInputId},PinName="InString",PinType.PinCategory="string",LinkedTo=(K2Node_CallFunction_ToString ${toStringOutputId},))
+   CustomProperties Pin (PinId=${generateGUID()},PinName="bPrintToScreen",PinType.PinCategory="bool",DefaultValue="true")
+   CustomProperties Pin (PinId=${generateGUID()},PinName="bPrintToLog",PinType.PinCategory="bool",DefaultValue="true")
+End Object`;
+        }
+
+        // Convert variable assignment to Blueprint
+        function convertVariableSet(varName, value) {
+            var beginPlayId = generateGUID();
+            var setVarId = generateGUID();
+            var printId = generateGUID();
+            var execOutId = generateGUID();
+            var setExecInId = generateGUID();
+            var setExecOutId = generateGUID();
+            var printExecInId = generateGUID();
+            var varGuid = generateGUID();
+            
+            // Determine variable type
+            var varType = 'string';
+            var varSubType = '';
+            if (/^\d+(\.\d+)?$/.test(value)) {
+                varType = 'real';
+                varSubType = 'double';
+            } else if (/^(true|false)$/i.test(value)) {
+                varType = 'bool';
+            }
+            
+            var pinType = varType;
+            if (varSubType) {
+                pinType += '",PinType.PinSubCategory="' + varSubType;
+            }
+            
+            return `Begin Object Class=/Script/BlueprintGraph.K2Node_Event Name="K2Node_Event_BeginPlay"
+   EventReference=(MemberParent="/Script/CoreUObject.Class'/Script/Engine.Actor'",MemberName="ReceiveBeginPlay")
+   bOverrideFunction=True
+   CustomProperties Pin (PinId=${beginPlayId},PinName="OutputDelegate",Direction="EGPD_Output",PinType.PinCategory="delegate")
+   CustomProperties Pin (PinId=${execOutId},PinName="then",Direction="EGPD_Output",PinType.PinCategory="exec",LinkedTo=(K2Node_VariableSet_${varName} ${setExecInId},))
+End Object
+
+Begin Object Class=/Script/BlueprintGraph.K2Node_VariableSet Name="K2Node_VariableSet_${varName}"
+   VariableReference=(MemberName="${varName}",MemberGuid=${varGuid},bSelfContext=True)
+   NodePosX=300
+   CustomProperties Pin (PinId=${setExecInId},PinName="execute",PinType.PinCategory="exec",LinkedTo=(K2Node_Event_BeginPlay ${execOutId},))
+   CustomProperties Pin (PinId=${setExecOutId},PinName="then",Direction="EGPD_Output",PinType.PinCategory="exec",LinkedTo=(K2Node_CallFunction_Print ${printExecInId},))
+   CustomProperties Pin (PinId=${generateGUID()},PinName="${varName}",PinType.PinCategory="${pinType}",DefaultValue="${value}")
+End Object
+
+Begin Object Class=/Script/BlueprintGraph.K2Node_CallFunction Name="K2Node_CallFunction_Print"
+   FunctionReference=(MemberParent="/Script/CoreUObject.Class'/Script/Engine.KismetSystemLibrary'",MemberName="PrintString")
+   NodePosX=500
+   CustomProperties Pin (PinId=${printExecInId},PinName="execute",PinType.PinCategory="exec",LinkedTo=(K2Node_VariableSet_${varName} ${setExecOutId},))
+   CustomProperties Pin (PinId=${generateGUID()},PinName="then",Direction="EGPD_Output",PinType.PinCategory="exec")
+   CustomProperties Pin (PinId=${generateGUID()},PinName="self",PinType.PinCategory="object",PinType.PinSubCategoryObject="/Script/CoreUObject.Class'/Script/Engine.KismetSystemLibrary'",DefaultObject="/Script/Engine.Default__KismetSystemLibrary",bHidden=True)
+   CustomProperties Pin (PinId=${generateGUID()},PinName="WorldContextObject",PinType.PinCategory="object",PinType.PinSubCategoryObject="/Script/CoreUObject.Class'/Script/CoreUObject.Object'",bHidden=True)
+   CustomProperties Pin (PinId=${generateGUID()},PinName="InString",PinType.PinCategory="string",DefaultValue="${varName} set to ${value}")
+   CustomProperties Pin (PinId=${generateGUID()},PinName="bPrintToScreen",PinType.PinCategory="bool",DefaultValue="true")
+   CustomProperties Pin (PinId=${generateGUID()},PinName="bPrintToLog",PinType.PinCategory="bool",DefaultValue="true")
+End Object`;
+        }
+
+        // Main conversion function
+        function convertCode() {
+            var input = document.getElementById('cppInput').value.trim();
+            var output = document.getElementById('blueprintOutput');
+            
+            if (!input) {
+                output.textContent = 'Please enter some C++ code to convert.';
+                return;
+            }
+            
+            // Try UE_LOG conversion
+            var ueLogMatch = input.match(/UE_LOG\([^,]+,\s*[^,]+,\s*TEXT\("([^"]+)"\)/);
+            if (ueLogMatch) {
+                var message = ueLogMatch[1];
+                output.textContent = '// UE_LOG converted to BeginPlay -> PrintString\n// Copy and paste into Blueprint Event Graph\n\n' + convertPrintString(message);
+                return;
+            }
+            
+            // Try if statement conversion
+            var ifMatch = input.match(/if\s*\(\s*(.+?)\s*\)/);
+            if (ifMatch) {
+                var condition = ifMatch[1];
+                output.textContent = '// If statement converted to BeginPlay -> Variable -> Math -> Branch -> PrintString\n// Copy and paste into Blueprint Event Graph\n\n' + convertIfStatement(condition);
+                return;
+            }
+            
+            // Try math operation conversion
+            var mathMatch = input.match(/(\w+)\s*=\s*(\w+|\d+)\s*\+\s*(\w+|\d+)/);
+            if (mathMatch) {
+                var varName = mathMatch[1];
+                var aValue = mathMatch[2];
+                var bValue = mathMatch[3];
+                output.textContent = '// Math operation converted to BeginPlay -> Math -> ToString -> PrintString\n// Copy and paste into Blueprint Event Graph\n\n' + convertMathOperation(varName, aValue, bValue);
+                return;
+            }
+            
+            // Try variable assignment conversion
+            var varMatch = input.match(/(\w+)\s*=\s*([^;]+);?/);
+            if (varMatch) {
+                var varName = varMatch[1];
+                var value = varMatch[2].trim();
+                output.textContent = '// Variable assignment converted to BeginPlay -> VariableSet -> PrintString\n// Copy and paste into Blueprint Event Graph\n\n' + convertVariableSet(varName, value);
+                return;
+            }
+            
+            // No patterns matched
+            output.textContent = '// No supported patterns found.\n// Try:\n// UE_LOG(LogTemp, Warning, TEXT("Hello World!"));\n// if (PlayerHealth > 0)\n// Result = 10 + 5;\n// MyVariable = 100;';
+        }
+
+        // Copy to clipboard
+        function copyToClipboard() {
+            var output = document.getElementById('blueprintOutput');
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(output.textContent).then(function() {
+                    var btn = event.target;
+                    var original = btn.textContent;
+                    btn.textContent = '✅ Copied!';
+                    setTimeout(function() {
+                        btn.textContent = original;
+                    }, 2000);
+                }).catch(function() {
+                    // Fallback for older browsers
+                    var textArea = document.createElement('textarea');
+                    textArea.value = output.textContent;
+                    document.body.appendChild(textArea);
+                    textArea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                });
+            }
+        }
+
+        // Event listeners and initialization
+        document.addEventListener('DOMContentLoaded', function() {
+            // Example buttons
+            document.getElementById('btnPrint').addEventListener('click', function() {
+                document.getElementById('cppInput').value = 'UE_LOG(LogTemp, Warning, TEXT("Hello from Blueprint!"));';
+                convertCode();
+            });
+            
+            document.getElementById('btnBranch').addEventListener('click', function() {
+                document.getElementById('cppInput').value = 'if (PlayerHealth > 0)';
+                convertCode();
+            });
+            
+            document.getElementById('btnMath').addEventListener('click', function() {
+                document.getElementById('cppInput').value = 'Result = 10 + 5;';
+                convertCode();
+            });
+            
+            document.getElementById('btnVariable').addEventListener('click', function() {
+                document.getElementById('cppInput').value = 'MyVariable = 100;';
+                convertCode();
+            });
+            
+            // Convert button
+            document.getElementById('btnConvert').addEventListener('click', convertCode);
+            
+            // Copy button
+            document.getElementById('btnCopy').addEventListener('click', copyToClipboard);
+            
+            // Auto-convert on input change
+            var debounceTimer;
+            document.getElementById('cppInput').addEventListener('input', function() {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(convertCode, 500);
+            });
+            
+            // Initial conversion
+            convertCode();
+        });
+    </script>
+</body>
+</html>
